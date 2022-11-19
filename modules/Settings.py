@@ -17,3 +17,7 @@ OAUTH = ""                                           #Oauth tokens are obtained 
 
 
 NIGHTBOT_AUTH = ""    #access_token of your nightbot application, to get one follow the procedure here https://api-docs.nightbot.tv/#oauth-2
+
+MY_AUTH = ""  #your auth if you want to have one
+
+link = "yoursite.com" #put the domain of your server

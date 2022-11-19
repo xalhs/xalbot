@@ -23,7 +23,7 @@ from modules.followage import followage
 from modules.outoutsmartingstrings import baseletter
 from modules.urban import urban
 from modules.wiki import wiki
-from modules.twitter import twitter
+#from modules.twitter import twitter
 from modules.uptime import uptime
 from modules.math_mod import math
 from modules.unmod import unmod
@@ -31,6 +31,8 @@ from modules.unmod import unmod
 from modules.predictions import create_prediction, end_prediction
 from modules.WTDplaysounds import WTD
 from modules.point_rewards import CreateReward, getRewardCode, UpdateRewardStatus, getRedemptionid
+
+from modules.youtube_api import request_song, currentqueue, currentsong, when, instaskipsong, playvideo, pausevideo, volume, wrongsong, voteskip
 
 import pandas as pd
 
@@ -227,7 +229,7 @@ while True:
                       ttsProcess.start()
                       pttsQueue += 1
                   if (pointRewards == 2):
-                     song = songrequest(message)
+                     song = request_song(message , user)
                      try:
                          if (song[0] == 0):
                              sendMessage(s, user + ", " + song[2])
@@ -253,7 +255,7 @@ while True:
                              globals.timer += maxdur
                          else:
                              globals.timer += duration
-                         sendMessage(s, user + " your video " + song.name + " by " + song.artist + " has been added to the queue in position " +  song.pos)
+                         sendMessage(s, user + " your video " + song.name + " by " + song.artist + " has been added to the queue in position " +  str(song.pos))
 
 
                   if (pointRewards == 3):
@@ -444,8 +446,8 @@ while True:
                   if (message.lower().startswith("!w ")) and (user == "xalhs"): #and (user == "NainsArrival"):
                       sendMessage(s, "/w " + user + " " +  message.split(" " , 1)[1] + "\r\n")
 
-                  if (message.lower().startswith("!twitter ")) and (mod == True or user == "xalhs"):
-                      sendMessage(s, twitter(message.split(" ", 1)[1]))
+                #  if (message.lower().startswith("!twitter ")) and (mod == True or user == "xalhs"):
+                #      sendMessage(s, twitter(message.split(" ", 1)[1]))
                   if (message.lower()) == "!drop":
                       sendMessage(s, "/me " + user + " your drop is ready check your notifications")
 
@@ -459,25 +461,36 @@ while True:
                            sendMessage(s,"/me " + uptimemessage)
                        else:
                            sendMessage(s,"/me " + uptimechannel + " has been live for " + uptimemessage)
-                  if (message.lower() == "!currentsong"):
-                      song = currentsong()
-                      if song == 0:
-                          sendMessage(s , "/me no song is playing on nightbot right now")
-                      else:
-                          i = 0
-                          req_user = song[3]
-                          while i < len(id_list):
-                              if id_list[i] == song[2]:
-                                  req_user = user_list[i]
-                              i+= 1
-                          globalCScd = True
-                          sendMessage(s, "/me " + user + ", " + song[0]+ " > " + song[1] + " 🎵 , requested by " + req_user)
-                  #if (message.lower() == "!reload module ") and user == "xalhs":
-                    #  importlib.reload(sys.modules[message.lower(" " , 4)[2]])
+                  if (message.lower() == "!currentsong" or message.lower() == "!song"  ):
+                      sendMessage(s , "/me " + user + ", " + currentsong())
 
-                      #for module in sys.modules.values():
-                        #  importlib.reload(module)
-                     # sendMessage(s, "modules reloaded MrDestructoid")
+                  if (message.lower() == "!q" or message.lower() == "!queue" ):
+                      sendMessage(s , "/me " + user + ", " + currentqueue())
+                  if (message.lower() == "!when"):
+                      sendMessage(s , "/me " + user + ", " + when(user))
+                  if (message.lower() == "!skip") and (mod == True or vip):
+                      instaskipsong()
+                  if (message.lower() == "!play") and (mod == True or vip):
+                      playvideo()
+                  if (message.lower() == "!pause") and (mod == True or vip):
+                      pausevideo()
+                  if (message.lower()).startswith("!volume") and (mod or vip):
+                      newvol = message.split(" " , 1)[1]
+                      try:
+                          newvolint = int(newvol)
+                          volume(newvolint)
+                          sendMessage(s , "/me " + user + " changed volume to " + str(newvolint))
+                      except:
+                          sendMessage(s , "/me " + user + ", please provide a valid value for the volume")
+                  if (message.lower()) == "!wrongsong":
+                      sendMessage(s , "/me " + user + "," + wrongsong(user))
+                  if user not in list(active_chatters.queue):
+                      active_chatters.put(user)
+                      active_chatter_Process = threading.Timer(remove_active_chatter , active_chatter_CD)
+                      active_chatter_Process.start()
+                  if (message.lower()) == "!voteskip":
+                      sendMessage(s, "/me " + voteskip(user , active_chatters.qsize()))
+
                   if (message.lower()).startswith("!math"):
                       if message.startswith("!math help"):
                           sendMessage(s, "/me @" + user + ' use !math to calculate mathematical expressions, for example "!math 3^2 + 4^2" ')
