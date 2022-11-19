@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script language="javascript"  src="http://code.jquery.com/jquery-1.4.2.min.js"></script>
+        <script src="http://www.youtube.com/player_api"></script>
+
+
+
+    </head>
+    <div id="player"></div>
+
+  <script src="http://www.youtube.com/player_api"></script>
+
+  <script id="demo" type="text/javascript">
+  var tag = document.createElement('script');
+
+      tag.src = "https://www.youtube.com/iframe_api";
+      var firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+  myVar = {{data|tojson}}
+  var list1 = myVar
+  var videoID = myVar[0]["videoID"]
+
+      // create youtube player
+      var player;
+    console.log("1")
+      function onYouTubePlayerAPIReady() {
+          player = new YT.Player('player', {
+            height: '390',
+            width: '640',
+            videoId: videoID,
+            playerVars: { 'autoplay': 1},
+      //      playerVars: {'wmode': 'opaque', 'autohide': 1 , 'enablejsapi': 1 , 'origin': 'http://www.yousite.com', 'rel': 0},
+            events: {
+              'onReady': onPlayerReady,
+              'onStateChange': onPlayerStateChange,
+              'onError': onPlayerError
+            }
+          });
+          console.log("YOURMOM")
+      }
+    console.log("2")
+    //  console.log("YOURMOM")
+  //  }
+
+
+      // autoplay video
+      function onPlayerReady(event) {
+        //  event.target.playVideo();
+        //  player.playVideo()
+          console.log("player ready")
+          player.loadVideoById(videoID, 0, "large");
+        //  next_song();
+          console.log(event.data)
+      }
+      console.log("4")
+      function onPlayerError(event) {
+        console.log("player error")
+
+        console.log(event.data);
+        next_song();
+        if(event.data === 150) {   //        alert('DUN OKAYEG');
+          console.log("error 150")
+        }
+      }
+
+      // when video ends
+      var done = false;
+        function onPlayerStateChange(event) {
+          console.log("player state change")
+          console.log(event.data)
+          console.log("data ^")
+          if (event.data === -1){
+            console.log("unstarted")
+      //      player.playVideo()
+        //    event.target.playVideo();
+
+          }
+          if(event.data === 0) { //    alert('done');
+            next_song();
+          }
+          //    if (event.data == YT.PlayerState.PLAYING && !done) {
+          //      setTimeout(stopVideo, 2000);
+          //      done = true;
+          //    }
+        }
+
+        function next_song(){
+          response =  fetch("http://127.0.0.1:5000/hello", {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                  first_name: "yourmom",
+                  last_name: "nword",
+                  age: "fgt"
+              })
+          }).then(response => response.json())
+          .then(data => {
+            console.log('Success:', data['data'][1]);
+          })//.then(res => res.json()).then(data => obj = data)
+          list1.shift();
+          videoID = list1[0]['videoID'];
+          console.log(videoID)
+          reload();
+          player.loadVideoById(videoID, 0, "large")
+          console.log("next song success")
+        }
+        console.log("6")
+        function stopVideo() {
+          console.log("7")
+          player.stopVideo();
+        }
+        console.log("8")
+
+    function reload(){
+		    $(document).ready(function() {
+          arrLen = list1.length - 1
+          var i = 1,
+
+          str = "";
+          str = str + '<table class="table table-striped">'
+          +'<thead>'
+          + '<tr>'
+          + '<th scope="col">#</th>'
+          +  '<th scope="col">title</th>'
+          +  '<th scope="col">uploader</th>'
+          +  '<th scope="col">requested by</th>'
+          +  '<th scope="col">length</th>'
+          + '</tr>'
+          + '</thead>'
+          + '<tbody>';
+          for (;i <= arrLen; i++){
+            str = str + '<tr>'
+            + '<th scope="row">' + String(i) + '</th>'
+            + '<td>' + list1[i]['title'] + '</td>'
+            + '<td>' + list1[i]['uploader'] + '</td>'
+            + '<td>' + list1[i]['user'] + '</td>'
+            + '<td>' + String(list1[i]['length']) + '</td>'
+            + '</tr>';
+          };
+          str = str + '</tbody>'
+          +   '</table>';
+			//append the markup to the DOM
+			$("#foo").html(str);
+      //  $('#foo').html("<p>" + myVar[0][0]['uploader'] + " </p>");
+		  })
+    };
+    reload();
+    console.log("9")
+	</script>
+    <body>
+		<div id="foo"></div>
+    </body>
+</html>

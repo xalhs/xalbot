@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script language="javascript"  src="http://code.jquery.com/jquery-1.4.2.min.js"></script>
+        <script src="http://www.youtube.com/player_api"></script>
+
+
+
+    </head>
+
+    <div id="player" style="display:none;"></div>
+
+  <script src="http://www.youtube.com/player_api"></script>
+
+  <script id="demo" type="text/javascript">
+  var tag = document.createElement('script');
+
+      tag.src = "https://www.youtube.com/iframe_api";
+      var firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+  myVar = {{data|tojson}}
+//<button onclick="myFunction()">Try it</button> putting it here cause idk how to comment 4HEad
+
+  var list1 = myVar[0]
+  var videoID = ""
+//  console.log(videoID)
+
+
+  videoID = myVar[0][0]["videoID"]
+  console.log(videoID)
+  var x = document.getElementById("player");
+  var y = document.getElementById("foo");
+  x.style.display = "none";
+  y.style.display = "none";
+  console.log("instahide")
+  if (videoID === ""){
+
+    x.style.display = "none";
+    y.style.display = "none";
+    console.log("unloading played")
+  }
+
+
+      // create youtube player
+      var player;
+    console.log("1")
+      function onYouTubePlayerAPIReady() {
+          player = new YT.Player('player', {
+            height: '390',
+            width: '640',
+            videoId: videoID,
+            playerVars: { 'autoplay': 1},
+      //      playerVars: {'wmode': 'opaque', 'autohide': 1 , 'enablejsapi': 1 , 'origin': 'http://www.yousite.com', 'rel': 0},
+            events: {
+              'onReady': onPlayerReady,
+              'onStateChange': onPlayerStateChange,
+              'onError': onPlayerError
+            }
+          });
+          console.log("YOURMOM")
+      }
+    console.log("2")
+    //  console.log("YOURMOM")
+  //  }
+
+
+      // autoplay video
+      function onPlayerReady(event) {
+        //  event.target.playVideo();
+        //  player.playVideo()
+          console.log("player ready")
+          console.log("videoID is ")
+          console.log(videoID)
+          var x = document.getElementById("player");
+          var y = document.getElementById("foo");
+          if (videoID === "" || videoID == null){
+            console.log("hiding player on ready")
+            x.style.display = "none";
+            y.style.display = "none";
+
+          }
+          else{
+            x.style.display = "block";
+            y.style.display = "block";
+          }
+
+          player.loadVideoById(videoID, 0, "large");
+        //  next_song();
+          console.log(event.data)
+      }
+      console.log("4")
+      function onPlayerError(event) {
+        console.log("player error")
+
+        console.log(event.data);
+        if (list1.length > 1){
+        next_song();
+        }
+        else{
+          var x = document.getElementById("player");
+          var y = document.getElementById("foo");
+          x.style.display = "none";
+          y.style.display = "none";
+          console.log("hiding player cause error")
+        }
+        if(event.data === 150) {   //        alert('DUN OKAYEG');
+          console.log("error 150")
+        }
+      }
+
+      // when video ends
+      var myPlayerState
+      var done = false;
+        function onPlayerStateChange(event) {
+          console.log("player state change")
+          console.log(event.data)
+          myPlayerState = event.data;   //-1 – unstarted, 0 – ended, 1 – playing, 2 – paused, 3 – buffering, 5 – video cued
+          console.log("data ^")
+          if (event.data === -1){
+            console.log("unstarted")
+      //      player.playVideo()
+        //    event.target.playVideo();
+
+          }
+          if(event.data === 0) { //    alert('done');
+            next_song();
+          }
+        }
+
+        function next_song(){
+          //response =  fetch("http://127.0.0.1:5000/hello", {
+          response =  fetch("yoursite.com/hello", {
+
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                  first_name: "yourmom",
+                  last_name: "forsen",
+                  age: "fgt"
+              })
+          }).then(response => response.json())
+          .then(data => {
+            console.log('Success:', data['data'][1]);
+          })//.then(res => res.json()).then(data => obj = data)
+          list1.shift();
+          if (list1.length === 0){
+            videoID = ""
+            reload();
+            player.loadVideoById(videoID, 0, "large");
+            var x = document.getElementById("player");
+            var y = document.getElementById("foo");
+            x.style.display = "none";
+            y.style.display = "none";
+            console.log("hiding player cause no next song")
+          }
+          else {
+          videoID = list1[0]['videoID'];
+          console.log(videoID)
+          reload();
+          player.loadVideoById(videoID, 0, "large")
+          console.log("next song success")
+          }
+
+        }
+        function play_next_song(){
+          videoID = list1[0]['videoID'];
+          console.log(videoID)
+          reload();
+          player.loadVideoById(videoID, 0, "large")
+          console.log("next song success")
+
+        }
+        console.log("6")
+        function stopVideo() {
+          console.log("7")
+          player.stopVideo();
+        }
+        console.log("8")
+
+    function reload(){
+		    $(document).ready(function() {
+          arrLen = list1.length - 1
+          var i = 1,
+
+          str = "";
+          str = str + '<table class="table table-striped">'
+          +'<thead>'
+          + '<tr>'
+          + '<th scope="col">#</th>'
+          +  '<th scope="col">title</th>'
+          +  '<th scope="col">uploader</th>'
+          +  '<th scope="col">requested by</th>'
+          +  '<th scope="col">length</th>'
+          + '</tr>'
+          + '</thead>'
+          + '<tbody>';
+          for (;i <= arrLen; i++){
+            str = str + '<tr>'
+            + '<th scope="row">' + String(i) + '</th>'
+            + '<td>' + list1[i]['title'] + '</td>'
+            + '<td>' + list1[i]['uploader'] + '</td>'
+            + '<td>' + list1[i]['user'] + '</td>'
+            + '<td>' + String(list1[i]['length']) + '</td>'
+            + '</tr>';
+          };
+          str = str + '</tbody>'
+          +   '</table>';
+			//append the markup to the DOM
+			$("#foo").html(str);
+      //  $('#foo').html("<p>" + myVar[0][0]['uploader'] + " </p>");
+		  })
+    };
+    reload();
+    console.log("9")
+	</script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+  <script type="text/javascript" charset="utf-8">
+      var socket = io();
+      socket.on('connection', socket => {
+        console.log("generating god seed")
+        socket.join('some room');
+      });
+      socket.on("connect_error", (err) => {
+          console.log(`connect_error due to ${err.message}`);
+      });
+      socket.on('connect', function() {
+          console.log("generated dream seed")
+          socket.emit('my event', {data: 'I\'m connected!'} );
+          joinRoom();
+          socket.emit('my event', {data: 'hi!'} ); /*.to("room1")*/
+      });
+
+      socket.on("message", (data) => {
+        console.log(data);
+      });
+
+      socket.on("skip", (el1 , el2) => {
+      //  console.log(elem1, elem2, elem3);
+          console.log("youmlekekekek")
+          next_song();
+      });
+      socket.on("removesong", (el1 , el2) => {
+          console.log("removing specific")
+          if (list1[el1] === el2){
+            list1.splice(el1, 1);
+
+          }
+          else{
+            console.log("failed to remove specific")
+          }
+        });
+
+      socket.on("add", (dict1) => {
+          console.log("adding song");
+          list1.push(dict1);
+          reload();
+          var x = document.getElementById("player");
+          var y = document.getElementById("foo");
+          if (videoID == ""){
+            x.style.display = "block";
+            y.style.display = "block";
+            play_next_song();
+          }
+      });
+
+      socket.on('status', function (data, fn) {
+        fn('pong');
+      });
+
+      socket.on('status3', (el1 , el2) => {
+        console.log(el1)
+        //fn([list1, myPlayerState, player.getCurrentTime()]);
+      });
+      socket.on('volume' , (el1) => {
+        player.setVolume(el1)
+      });
+      socket.on('play' , (el1) => {
+        console.log("play")
+
+        var x = document.getElementById("player");
+        var y = document.getElementById("foo");
+        x.style.display = "block";
+        y.style.display = "block";
+        player.playVideo()
+        //fn([list1, myPlayerState, player.getCurrentTime()]);
+      });
+      socket.on('pause' , (el1)=> {
+        console.log("pause0");
+        console.log("pause2");
+        player.pauseVideo();
+        var x = document.getElementById("player");
+        var y = document.getElementById("foo");
+        x.style.display = "none";
+        y.style.display = "none";
+        console.log("hiding player cause pause")
+        //fn([list1, myPlayerState, player.getCurrentTime()]);
+      });
+     socket.on('playsound' , (el1 ,el2) =>{
+       console.log(el1)
+       var audio = new Audio("playsounds/".concat(el1.concat(el2)));
+    //   var audio = new Audio(el1.concat(".mp3"));
+      //  var audio = new Audio("https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3");
+
+       audio.play();
+    //   Audio(el1.concat(".mp3")).play();
+     });
+
+     socket.on('specialplaysound' , (el1 ,el2) =>{
+       console.log(el1)
+       var audio = new Audio("specialplaysounds/".concat(el1.concat(el2)));
+    //   var audio = new Audio(el1.concat(".mp3"));
+      //  var audio = new Audio("https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3");
+
+       audio.play();
+    //   Audio(el1.concat(".mp3")).play();
+     });
+     socket.on('tts' , (el1 ,el2) =>{
+       console.log(el1)
+       var audio = new Audio("tts/".concat(el1.concat(el2)));
+       audio.play();
+     });
+
+
+      function myFunction() {
+  var x = document.getElementById("player");
+  var y = document.getElementById("foo");
+  if (x.style.display === "none") {
+    x.style.display = "block";
+    y.style.display = "block";
+  } else {
+    var x = document.getElementById("player");
+    y.style.display = "none";
+    x.style.display = "none";
+    console.log("hiding player cause function")
+  }
+}
+
+
+      function joinRoom() {
+        console.log("ask server to join room");
+        socket.emit("join", { "username": Date.now(), "room": "room1" });
+      }
+      function plays() {
+        document.getElementById("multiaudio5").play();
+      //  var audio = new Audio("C:/Users/XALHS/pyth/var/playsounds/Allo.mp3");
+    //  var audio = new Audio("Allo.mp3");
+        //audio.play();
+      }
+
+
+      socket.on
+
+  </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.1/howler.min.js"></script>
+<script>
+  function playso() {
+    console.log("allooooo")
+    var sound = new Howl({
+      //src: ['C:/Users/XALHS/pyth/var/playsounds/Allo.mp3'],
+      src: ['https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'],
+      volume: 1.0,
+      onend: function () {
+        alert('We finished with the setup!');
+      }
+    });
+    console.log("presound")
+    sound.play()
+  console.log("postsound")}
+
+</script>
+<script src="sounds.js" type="text/javascript"></script>
+<!-- <script>
+"dead" : {
+  url : "playsounds/Allo.wav"
+}
+</script> -->
+<script src="sounds.js" type="text/javascript"></script>
+<script>
+function playsoun(){
+  console.log("prefunc");
+  playSound("dead")}
+</script>
+    <body>
+
+		<div id="foo"></div>
+
+
+<script>
+  function playSound() {
+  var sound = document.getElementById("audioooo");
+  sound.play();
+}
+</script>
+
+<script>
+var $audio = $('#myAudio');
+$('input').on('change', function(e) {
+  var target = e.currentTarget;
+  var file = target.files[0];
+  var reader = new FileReader();
+
+  console.log($audio[0]);
+   if (target.files && file) {
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            $audio.attr('src', e.target.result);
+            $audio.play();
+        }
+        reader.readAsDataURL(file);
+    }
+});
+function playson(){
+  var audio = new Audio("Resources/music/allo.mp3");
+  audio.play();
+//$('#audioS').html('<audio autoplay><source src="C:/Users/XALHS/pyth/var/playsounds/Allo.mp3"></audio>');   //Not allowed to load local resource: file:///C:/Users/XALHS/pyth/var/playsounds/Allo.mp3
+
+}
+function PlaySounnd(soundobj) {
+
+                    var thissound = document.getElementById(soundobj);
+
+                    thissound.play();
+
+                }
+
+
+                function PauseSound(soundobj) {
+
+                    var thissound = document.getElementById(soundobj);
+
+                    thissound.pause();
+
+                }
+
+</script>
+
+
+
+            <form id="form1" runat="server">
+            <div>
+             <!-- <input type="button" value="PlaySounnd" onclick="PlaySounnd('audio1'), PlaySounnd('audio2')" />
+              <input type="button" value="PauseSound" onclick="PauseSound('audio1'), PauseSound('audio2')" /> -->
+            </div>
+            </form>
+    <script>
+    reload();
+    </script>
+    </body>
+</html>
