@@ -3,7 +3,7 @@ from modules.Settings import CHANNEL, IDENT ################
 from modules.ReadOLD import getUser, getMessage, getEmotes, getStatus, getBStatus, getPointRewards
 from modules.Socket import openSocket, sendMessage
 from modules.Initialize import joinRoom
-from modules.twitchPlaysounds import twitchPlaysound, twitchPlaysoundWTD
+from modules.twitchPlaysounds import twitchPlaysound, twitchPlaysoundWTD, serverPlaysound, serverPlaysoundWTD
 from modules.twitchEmotes import twitchEmotes
 from modules.FFZ import ReloadFFZ, showFFZ
 from modules.BTTV import showBTTV
@@ -11,7 +11,7 @@ from modules.BTTV import showBTTV
 from modules.points import points, Roulette, PointsIncrease, PointsDecrease, rank
 from modules.pasta import pasta, addpasta
 from modules.commands import addcommand, commands
-from modules.tts import tts, Pointstts  #, changettsVolume, actualttsvolume
+from modules.tts import tts, Pointstts, servertts, serverPointstts  #, changettsVolume, actualttsvolume
 from modules.shoutout import shoutout
 from modules.editorbot import titlechange, gamechange
 #from modules.ReadCLASS import Message_properties
@@ -87,6 +87,13 @@ CDweebslist = queue.Queue(maxsize=1000)
 #    CDweebslist.get()
 
 #CDweebstime = 60
+
+active_chatters = queue.Queue(maxsize = 1000)
+def remove_active_chatter():
+    active_chatters.get()
+
+active_chatter_CD = 600
+
 
 id_list = []
 user_list = []
@@ -200,17 +207,11 @@ while True:
                   if (message.lower()).startswith("!tts "):
                       if (points(user) > ttsPrice  and CDTTS == False) and (globals.ttsEND == True and ttsAllowed == True):
                           PointsDecrease(user, ttsPrice)
-                          # config['ttsEND']
-                #          threads = []
-                    #      ttsProcess = multiprocessing.Process(target = tts, args = (message.split(" " , 1)[1],))
-                          ttsProcess = threading.Thread(target = tts, args = (message.split(" " , 1)[1],))
-                    #      tts(message.split(" " , 1)[1])
-                    #      threads.append(ttsProcess)
+                          ttsProcess = threading.Thread(target = servertts, args = (message.split(" " , 1)[1],))
                           globals.ttsEND = False
                           ttsProcess.start()
                           timerTTS = threading.Timer(10.0, cooldownTTS)
                           timerTTS.start()
-                    #      ttsProcess.join()
                           CDTTS = True
                       elif (ttsAllowed == False):
                           sendMessage(s, "tts is currently off")
@@ -225,7 +226,7 @@ while True:
                       reward_params = reward_params.split("|")
                       sendMessage(s, "/me @" + user + " " + CreateReward(reward_params))
                   if (pointRewards == 1):
-                      ttsProcess = threading.Thread(target = Pointstts, args = (message, pttsQueue,))
+                      ttsProcess = threading.Thread(target = serverPointstts, args = (message, pttsQueue,))
                       ttsProcess.start()
                       pttsQueue += 1
                   if (pointRewards == 2):
@@ -260,7 +261,7 @@ while True:
 
                   if (pointRewards == 3):
                       waytoodank = "!playsound hey guys hows it going kripparrian here waytoodank"
-                      PlaysoundProcess = threading.Thread(target = twitchPlaysoundWTD, args = (waytoodank,))
+                      PlaysoundProcess = threading.Thread(target = serverPlaysoundWTD, args = (waytoodank,))
                       PlaysoundProcess.start()
                   if (pointRewards == 5):
                       psound = message
@@ -278,7 +279,7 @@ while True:
                           UpdateRewardStatus(["WAYTOODANKIFY" , id_of_redemption , "CANCELED"])
                   if (pointRewards == 6):
                       if os.path.isfile("var/SpecialPlaysounds/" + message+ "WAYTOODANK.mp3"):
-                          PlaysoundProcess = threading.Thread(target = twitchPlaysoundWTD, args = (message,))
+                          PlaysoundProcess = threading.Thread(target = serverPlaysoundWTD, args = (message,))
                           PlaysoundProcess.start()
                           #UpdateRewardStatus(["Play Special Playsound" , id_of_redemption , "FULFILLED"])
                       else:
@@ -391,11 +392,11 @@ while True:
                       permWTD = True
                       timerWTD = threading.Timer(10.0 , allowWTD)
                       timerWTD.start()
-                  if (message.lower()) == "!playsound hey guys hows it going kripparrian here waytoodank" and permWTD == True:
-                      PlaysoundProcess = threading.Thread(target = twitchPlaysoundWTD, args = (message,))
+                  if (message.lower()) == "!playsound " and permWTD == True:
+                      PlaysoundProcess = threading.Thread(target = serverPlaysoundWTD, args = (message,))
                       PlaysoundProcess.start()
                   if playsounds == True:
-                     PlaysoundProcess = threading.Thread(target = twitchPlaysound, args = (message,))
+                     PlaysoundProcess = threading.Thread(target = serverPlaysound, args = (message,))
                      # twitchPlaysound(message)
                      PlaysoundProcess.start()
                   if (message.lower() == "!enable weebs"):
