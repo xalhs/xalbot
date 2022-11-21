@@ -32,7 +32,7 @@ from modules.predictions import create_prediction, end_prediction
 from modules.WTDplaysounds import WTD
 from modules.point_rewards import CreateReward, getRewardCode, UpdateRewardStatus, getRedemptionid
 
-from modules.youtube_api import request_song, currentqueue, currentsong, when, instaskipsong, playvideo, pausevideo, volume, wrongsong, voteskip
+from modules.youtube_api import request_song, currentqueue, currentsong, when, instaskipsong, playvideo, pausevideo, volume, wrongsong, voteskip, playliston, playlistoff, loadplaylist
 
 import pandas as pd
 
@@ -383,6 +383,14 @@ while True:
                   if ((message.lower()) == "!playsoundsoff") and mod == True:
                       playsounds = False
                       sendMessage(s, "playsounds are now off")
+                  if ((message.lower()) == "!playliston" or (message.lower()) == "!playlist on") and user == "xalhs":
+                      playliston()
+                      sendMessage(s, "playlist is now on")
+                  if ((message.lower()) == "!playlistoff" or (message.lower()) == "!playlist off") and user == "xalhs":
+                      playlistoff()
+                      sendMessage(s, "playlist is now off")
+                  if (message.lower()).startswith("!loadplaylist ") and user == "xalhs":
+                      loadplaylist(message.split(" " , 1)[1])
                   if (message.lower()) == "!ffz":
                       sendMessage(s, "available FFZ emotes: " + showFFZ())
                   if (message.lower()) == "!bttv":

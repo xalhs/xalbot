@@ -23,6 +23,12 @@
 //<button onclick="myFunction()">Try it</button> putting it here cause idk how to comment 4HEad
 
   var list1 = myVar[0]
+  var play_list = myVar[1]
+  var play_list_index = 0
+  var playlist_on = false
+  console.log(myVar)
+  console.log(play_list[0]['path'])
+  var playlist_song = new Audio(play_list[play_list_index]["path"])
   var videoID = ""
 //  console.log(videoID)
 
@@ -155,6 +161,9 @@
             x.style.display = "none";
             y.style.display = "none";
             console.log("hiding player cause no next song")
+            if (playlist_on === true){
+            playlist_song.play(); console.log(play_list_index);
+            }
           }
           else {
           videoID = list1[0]['videoID'];
@@ -164,6 +173,28 @@
           console.log("next song success")
           }
 
+        }
+        function play_next_playlist_song(){
+            if (! (playlist_song === undefined)) {
+              console.log("not undefined")
+            playlist_song.pause();
+          }
+            if (play_list_index === play_list.length - 1){
+              play_list_index = 0
+              console.log("resetting playlist")
+            }  else {
+              play_list_index = play_list_index + 1
+              console.log("moving to next song")
+            }
+
+          playlist_song = new Audio(play_list[play_list_index]["path"])
+          playlist_song.play();
+          console.log("playlist index is v");
+          console.log(play_list_index);
+          playlist_song.onended = function(){
+            console.log("playlist song ended")
+        play_next_playlist_song();
+      };
         }
         function play_next_song(){
           videoID = list1[0]['videoID'];
@@ -238,8 +269,11 @@
       });
 
       socket.on("skip", (el1 , el2) => {
-      //  console.log(elem1, elem2, elem3);
-          console.log("youmlekekekek")
+        console.log("skipping playlist song")
+        if (list1.length === 0){
+          console.log("skipping playlist song")
+          play_next_playlist_song();
+      }
           next_song();
       });
       socket.on("removesong", (el1 , el2) => {
@@ -260,6 +294,8 @@
           var x = document.getElementById("player");
           var y = document.getElementById("foo");
           if (videoID == ""){
+            play_next_playlist_song();
+            playlist_song.pause();
             x.style.display = "block";
             y.style.display = "block";
             play_next_song();
@@ -269,7 +305,10 @@
       socket.on('status', function (data, fn) {
         fn('pong');
       });
-
+      socket.on('status2', function (data,fn) {
+        console.log(data)
+        fn([list1, myPlayerState, player.getCurrentTime() , play_list[play_list_index]['name'], playlist_song.paused , playlist_song.currentTime , playlist_song.duration ]);
+      });
       socket.on('status3', (el1 , el2) => {
         console.log(el1)
         //fn([list1, myPlayerState, player.getCurrentTime()]);
@@ -289,6 +328,11 @@
       });
       socket.on('pause' , (el1)=> {
         console.log("pause0");
+        if (list1.length === 0){
+          console.log("pause1");
+      playlist_song.pause();
+    }
+
         console.log("pause2");
         player.pauseVideo();
         var x = document.getElementById("player");
@@ -308,6 +352,35 @@
     //   Audio(el1.concat(".mp3")).play();
      });
 
+     socket.on('playlistON' ,() =>{
+     playlist_song = new Audio(play_list[play_list_index]["path"])
+     if((videoID === null || videoID === "") && playlist_on === false ){
+       playlist_song.play();
+     }
+     playlist_on = true
+     playlist_song.onended = function(){
+       console.log("playlist song ended")
+   play_next_playlist_song();
+ };
+  });
+  socket.on('playlistOFF',() =>{
+    playlist_song.pause();
+    playlist_on = false
+  });
+  socket.on('loadplaylist'  , (el1) => {
+   playlist_song.pause();
+   play_list = el1
+   play_list_index = 0
+   playlist_song = new Audio(play_list[play_list_index]["path"])
+   playlist_song.onended = function(){
+     console.log("playlist song ended")
+ play_next_playlist_song();
+};
+ });
+     playlist_song.onended = function(){
+       console.log("playlist song ended")
+   play_next_playlist_song();
+ };
      socket.on('specialplaysound' , (el1 ,el2) =>{
        console.log(el1)
        var audio = new Audio("specialplaysounds/".concat(el1.concat(el2)));

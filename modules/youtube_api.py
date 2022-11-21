@@ -287,6 +287,19 @@ def pausevideo():
     print('pausing')
     request = requests.post( link + "/pause", headers = {"Content-Type": "application/json" , 'Authorization': MY_AUTH} ).json()
 
+def playliston():
+    print('playlist on')
+    request = requests.post( link + "/playliston", headers = {"Content-Type": "application/json" , 'Authorization': MY_AUTH} )
+
+def playlistoff():
+    print('playlist off')
+    request = requests.post( link + "/playlistoff", headers = {"Content-Type": "application/json" , 'Authorization': MY_AUTH} )
+
+def loadplaylist(playlist_name):
+    print('loading playlist: ' + playlist_name)
+    body = json.dumps({"data": playlist_name})
+    request = requests.post( link + "/loadplaylist", headers = {"Content-Type": "application/json" , 'Authorization': MY_AUTH} ,  data = body).json()
+
 if __name__ == "__main__":
 
 

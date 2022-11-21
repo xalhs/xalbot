@@ -53,10 +53,12 @@ def create_app(test_config=None):
             print("POSTED")
             list1 = database_to_list()
             return(list1)
-
+        play_list_df = pd.read_csv("D:/users/xalhs/pyth/var/Resources/playlists/god list gachi.csv" )#, names = column_names_plist)
+        play_list = play_list_df.to_dict('records')
+        random.shuffle(play_list)
         list1 = database_to_list()
         print(list1)
-        return render_template('server_template.html', data= [list1])
+        return render_template('server_template.html', data= [list1, play_list])
 
     @app.route('/sr' , methods=['GET', 'POST'])
     def sr2():
@@ -95,6 +97,27 @@ def create_app(test_config=None):
         if request.method == 'POST' and request.headers['Authorization'] == MY_AUTH:
             socketio.emit('skip' , ("foo" , "bar") )#, namespace='/' )
             return json.dumps({"succ" : "ess"})
+    @app.route('/playlistoff' , methods=['GET', 'POST'])
+    def playlistoff():
+        if request.headers['Authorization'] == MY_AUTH:
+            socketio.emit('playlistOFF' , to= "room1")
+            return("success")
+    @app.route('/loadplaylist' , methods=['GET', 'POST'])
+    def loadplaylist():
+        if request.headers['Authorization'] == MY_AUTH:
+            playlist_name = request.json['data']
+            if os.path.isfile("D:/users/xalhs/pyth/var/Resources/playlists/"+ playlist_name + ".csv"):
+                play_list_df = pd.read_csv("D:/users/xalhs/pyth/var/Resources/playlists/"+ playlist_name + ".csv" )#, names = column_names_plist)
+                #print(play_list_df)
+
+                play_list = play_list_df.to_dict('records')
+                random.shuffle(play_list)
+                socketio.emit('loadplaylist' , (play_list) , to= "room1" )
+                return json.dumps({"data": "success"})
+            else:
+                return json.dumps({"data": "failed: playlist not found"})
+
+
 
     @app.route('/hello' , methods=['GET', 'POST'])
     def hello():
