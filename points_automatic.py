@@ -11,7 +11,7 @@ amount = 50
 
 T = True
 while ( T == True):
-    list = chatters(CHANNEL)
+    list = chatters()
     df = pd.read_csv('var/points/points.csv'  , index_col = 0).T
     for name in list:
         if name in df:
