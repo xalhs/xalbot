@@ -32,7 +32,7 @@ def Roulette(name , amount):
             df.to_csv('var/points/points.csv')
 
             f= codecs.open("var/Roulette/" + name + ".txt", "a+" , "utf-8")
-            f.write(((time.ctime(time.time())).split(" ", 1)[1]).rsplit(" " , 1)[0]  + " roulette: -" + str(amount) +  "\r\n")
+            f.write((time.ctime(time.time())).split(" ", 1)[1]  + " roulette: -" + str(amount) +  "\r\n")
             f.close()
             return -1
         else:
@@ -41,7 +41,7 @@ def Roulette(name , amount):
             df.to_csv('var/points/points.csv')
 
             f= codecs.open("var/Roulette/" + name + ".txt", "a+" , "utf-8")
-            f.write(((time.ctime(time.time())).split(" ", 1)[1]).rsplit(" " , 1)[0] + " roulette: +" + str(amount) +  "\r\n")
+            f.write((time.ctime(time.time())).split(" ", 1)[1] + " roulette: +" + str(amount) +  "\r\n")
             f.close()
             return 1
 
