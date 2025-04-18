@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Twitch Chat Renderer</title>
+    <style>
+        body {
+            background-color: #0e0e10;
+            color: #e0e0e0;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: row;
+            height: 100vh;
+        }
+        .video-container {
+            flex: 3;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+        }
+        video {
+            width: 100%;
+            height: auto;
+            max-height: 100%;
+        }
+        .chat-container {
+          /*  flex: 0.65; /*adjust to match chat width*/
+            background-color: #1f1f23;
+            border-left: 1px solid #333;
+            border-radius: 0;
+            padding: 10px;
+            overflow-y: scroll;
+            width: 21rem;
+            max-height: 100%;
+            position: relative;
+        }
+        .chat-message {
+            display: none;
+            align-items: center;
+            margin: 5px 0;
+            padding: 5px;
+            border-bottom: 1px solid #323238;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        .username {
+            font-weight: bold;
+            color: #6441a5;
+            margin-right: 0px;
+        }
+        .message {
+            margin-left: 0;
+        }
+        .badge {
+            width: 18px;
+            height: 18px;
+            vertical-align: middle;
+            margin-right: 2px;
+            position: relative;
+            top: -2px;
+        }
+        .emote {
+            vertical-align: middle;
+            position: relative;
+            top: -4px;
+        }
+        .scroll-button {
+            display: none;
+            position: fixed;
+            background-color: rgba(0, 0, 0, 0.6);
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <!-- Video Player -->
+    <div class="video-container">
+        <video id="video-player" controls>
+            <source src="/static/{{ video_file }}" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+    </div>
+
+    <!-- Chat Container -->
+    <div class="chat-container" id="chat-container"></div>
+    <button id="scroll-button" class="scroll-button">Chat Paused Due to Scroll</button>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const maxRenderedMessages = 100; // Limit to the last 100 messages
+            const preloadMessages = 20; // Number of messages to render before the timestamp (history)
+
+            const chatContainer = document.getElementById('chat-container');
+            const scrollButton = document.getElementById('scroll-button');
+            const videoPlayer = document.getElementById('video-player'); // Reference to the video player
+            let autoScroll = true;
+            let lastRenderedTimestamp = 0;
+
+            // Cache for base64 conversions
+            const base64Cache = new Map();
+
+            // Function to scroll to the bottom
+            function scrollToBottom() {
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+
+            // Function to position the scroll button
+            function positionScrollButton() {
+                const containerRect = chatContainer.getBoundingClientRect();
+                const buttonWidth = scrollButton.offsetWidth;
+                // Set the button's position to the bottom middle of the chat container
+               scrollButton.style.position = 'absolute';
+               scrollButton.style.bottom = '10px';
+                scrollButton.style.right = `${containerRect.width / 2 - buttonWidth / 2}px`;
+            //   scrollButton.style.transform = 'translateX(-50%)';
+            }
+
+            // Function to convert base64 to Blob URL with caching
+            function base64ToBlobUrl(base64, mimeType) {
+                if (base64Cache.has(base64)) {
+                    return base64Cache.get(base64);
+                }
+                const byteCharacters = atob(base64);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: mimeType });
+                const url = URL.createObjectURL(blob);
+                base64Cache.set(base64, url);
+                return url;
+            }
+
+            // Helper function to replace third-party emote codes with images
+            function replaceThirdPartyEmotes(text, thirdPartyEmotes) {
+                thirdPartyEmotes.forEach(emote => {
+                    if (emote.data && emote.name) {
+                        // Convert base64 to Blob URL
+                        const emoteUrl = base64ToBlobUrl(emote.data, 'image/gif');
+
+                        // Generate <img> tag for the emote
+                        const emoteImg = `<img class="emote" src="${emoteUrl}" width="${emote.width}" height="${emote.height}" alt="${emote.name}">`;
+
+                        // Replace emote name in the text with the <img> tag
+                        text = text.replace(new RegExp(`\\b${emote.name}\\b`, 'g'), emoteImg);
+                    }
+                });
+                return text;
+            }
+
+            // Function to render a single chat message
+            function renderMessage(msg, twitchBadges, firstPartyEmotes, thirdPartyEmotes) {
+                const chatMessage = document.createElement('div');
+                chatMessage.className = 'chat-message';
+
+                // Prepare badges
+                let badgesHtml = '';
+                if (msg.message.user_badges) {
+                    msg.message.user_badges.forEach(badge => {
+                        const badgeData = twitchBadges.find(b => b.name === badge._id);
+                        if (badgeData) {
+                            const badgeVersion = badgeData.versions[badge.version];
+                            const badgeSrc = base64ToBlobUrl(badgeVersion.bytes, 'image/png');
+                            badgesHtml += `<img class="badge" src="${badgeSrc}" alt="${badgeVersion.title}" title="${badgeVersion.title}">`;
+                        }
+                    });
+                }
+
+                // Replace emotes in the message body
+                let messageBody = msg.message.body;
+
+                // Replace first-party emotes
+                messageBody = msg.message.fragments.map(fragment => {
+                    if (fragment.emoticon) {
+                        const emoteData = firstPartyEmotes.find(emote => emote.id === fragment.emoticon.emoticon_id);
+                        if (emoteData) {
+                            const emoteUrl = base64ToBlobUrl(emoteData.data, 'image/gif');
+                            return `<img class="emote" src="${emoteUrl}" width="${emoteData.width}" height="${emoteData.height}" alt="${fragment.text}">`;
+                        }
+                    }
+                    return fragment.text;
+                }).join('');
+
+                // Replace third-party emotes
+                messageBody = replaceThirdPartyEmotes(messageBody, thirdPartyEmotes);
+
+                chatMessage.innerHTML = `${badgesHtml}<span class="username" style="color:${msg.message.user_color}">${msg.commenter.display_name}</span>: <span class="message">${messageBody}</span>`;
+                // Detect if the user is already at the bottom before adding the message
+                const isAtBottom = Math.abs(chatContainer.scrollHeight - chatContainer.scrollTop - chatContainer.clientHeight) < 5;
+
+                chatContainer.appendChild(chatMessage);
+
+                // Display the message
+                chatMessage.style.display = 'block';
+                // If the user was already at the bottom, lock scroll at the bottom
+                if (isAtBottom) {
+                    scrollToBottom();
+                }
+            }
+
+            // Function to process chat messages
+            function processMessages(messages, twitchBadges, firstPartyEmotes, thirdPartyEmotes, currentTimestamp) {
+                // Clear chat container if timestamp has changed manually
+                if (Math.abs(currentTimestamp - lastRenderedTimestamp) < 0.9 && currentTimestamp > lastRenderedTimestamp) { //can be changed to 1 maybe?
+                  // Normal playback: append only new messages
+                  const newMessages = messages.filter(msg => msg.content_offset_seconds > lastRenderedTimestamp && msg.content_offset_seconds <= currentTimestamp);
+                  newMessages.forEach(msg => renderMessage(msg, twitchBadges, firstPartyEmotes, thirdPartyEmotes));
+                } else {
+                  // Manual timestamp change: clear the chat and render everything up to the current timestamp
+                  chatContainer.innerHTML = ''; // Clear all messages
+                  const pastMessages = messages.filter(msg => msg.content_offset_seconds <= currentTimestamp);
+                  pastMessages.slice(-maxRenderedMessages).forEach(msg => renderMessage(msg, twitchBadges, firstPartyEmotes, thirdPartyEmotes));
+
+                }
+
+                // Update the last rendered timestamp
+                lastRenderedTimestamp = currentTimestamp;
+
+                // Limit the number of rendered messages
+                const renderedMessages = chatContainer.children;
+                while (renderedMessages.length > maxRenderedMessages) {
+                    chatContainer.removeChild(renderedMessages[0]); // Remove the oldest message
+                }
+            }
+
+            // Fetch chat data
+            function fetchChatData() {
+                fetch('/api/chat')
+                    .then(response => response.json())
+                    .then(data => {
+                        const { comments, embeddedData } = data;
+                        const { twitchBadges, firstParty, thirdParty } = embeddedData;
+
+                        // Sync chat with video timestamp
+                        videoPlayer.addEventListener('timeupdate', () => {
+                            const currentTimestamp = videoPlayer.currentTime;
+                            processMessages(comments, twitchBadges, firstParty, thirdParty, currentTimestamp);
+                        });
+                    });
+            }
+            // Event listener for scrolling
+            chatContainer.addEventListener('scroll', () => {
+                    const isAtBottom = Math.abs(chatContainer.scrollHeight - chatContainer.scrollTop - chatContainer.clientHeight) < 5;
+                    if (isAtBottom) {
+                        autoScroll = true;
+                        scrollButton.style.display = 'none';
+                    } else {
+                        autoScroll = false;
+                        scrollButton.style.display = 'block';
+                    }
+                    positionScrollButton();
+                });
+
+         // Event listener for scroll button
+         scrollButton.addEventListener('click', () => {
+             autoScroll = true;
+             scrollToBottom();
+             scrollButton.style.display = 'none';
+         });
+         // Position the scroll button on window resize
+         window.addEventListener('resize', positionScrollButton);
+
+            // Fetch chat data and initialize
+            fetchChatData();
+            positionScrollButton(); // Initial positioning of the button
+        });
+    </script>
+</body>
+</html>

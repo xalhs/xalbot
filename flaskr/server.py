@@ -257,6 +257,26 @@ def create_app(test_config=None):
         print("sending from dir " + 'D:/Users/XALHS/pyth/var/Resources/music/' + filename)
         return send_from_directory('D:/Users/XALHS/pyth/var/Resources/music/' , filename)
 
+    def load_chat_data(filepath='static/Chats/Chat.json'):
+        with open(filepath, 'r', encoding='utf-8') as f:
+            return json.load(f)
+
+    @app.route('/videos/')
+    def videos():
+         # Specify the video file name
+        video_file = 'video.mp4'
+
+        # Load the chat data
+        chat_data = load_chat_data()
+
+        # Pass both the video file and chat data to the template
+        return render_template('videos.html', chat_data=chat_data, video_file=video_file)
+
+    @app.route('/api/chat')
+    def api_chat():
+        chat_data = load_chat_data()
+        return jsonify(chat_data)
+        
     return app
 
 def pause_until_done():
